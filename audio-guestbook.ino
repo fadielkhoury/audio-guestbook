@@ -39,6 +39,8 @@
 #define HOOK_PIN 0
 #define PLAYBACK_BUTTON_PIN 1
 
+#define LED_PIN 13
+
 #define noINSTRUMENT_SD_WRITE
 
 // GLOBALS
@@ -70,6 +72,7 @@ Bounce buttonPlay = Bounce(PLAYBACK_BUTTON_PIN, 40);
 enum Mode {Initialising, Ready, Prompting, Recording, Playing};
 Mode mode = Mode::Initialising;
 
+// float beep_volume = 0.9f; // not too loud :-)
 float beep_volume = 0.04f; // not too loud :-)
 
 uint32_t MTPcheckInterval; // default value of device check interval [ms]
@@ -102,6 +105,10 @@ void setup() {
   pinMode(HOOK_PIN, INPUT_PULLUP);
   pinMode(PLAYBACK_BUTTON_PIN, INPUT_PULLUP);
 
+  digitalWrite(LED_PIN, HIGH);
+  wait(1000);
+  digitalWrite(LED_PIN, LOW);
+
   // Audio connections require memory, and the record queue
   // uses this memory to buffer incoming audio.
   AudioMemory(60);
@@ -116,11 +123,16 @@ void setup() {
   mixer.gain(0, 1.0f);
   mixer.gain(1, 1.0f);
 
+  digitalWrite(LED_PIN, HIGH);
   // Play a beep to indicate system is online
   waveform1.begin(beep_volume, 440, WAVEFORM_SINE);
+  // waveform1.begin(WAVEFORM_SINE);
+  // waveform1.frequency(440);
+  // waveform1.amplitude(0.9);
   wait(1000);
   waveform1.amplitude(0);
   delay(1000);
+  digitalWrite(LED_PIN, LOW);
 
   // Initialize the SD card
   SPI.setMOSI(SDCARD_MOSI_PIN);
@@ -141,13 +153,13 @@ void setup() {
 
   // Add SD Card
 //    MTP.addFilesystem(SD, "SD Card");
-    MTP.addFilesystem(SD, "Kais Audio guestbook"); // choose a nice name for the SD card volume to appear in your file explorer
+    MTP.addFilesystem(SD, "FadiEvita Audio guestbook"); // choose a nice name for the SD card volume to appear in your file explorer
     Serial.println("Added SD card via MTP");
     MTPcheckInterval = MTP.storage()->get_DeltaDeviceCheckTimeMS();
     
     // Value in dB
-//  sgtl5000_1.micGain(15);
-  sgtl5000_1.micGain(5); // much lower gain is required for the AOM5024 electret capsule
+  sgtl5000_1.micGain(30);
+  // sgtl5000_1.micGain(5); // much lower gain is required for the AOM5024 electret capsule
 
   // Synchronise the Time object used in the program code with the RTC time provider.
   // See https://github.com/PaulStoffregen/Time
@@ -157,6 +169,7 @@ void setup() {
   // (i.e. saving a new audio recording onto the SD card)
   FsDateTime::setCallback(dateTime);
 
+  // mode = Mode::Prompting; print_mode();
   mode = Mode::Ready; print_mode();
 }
 
